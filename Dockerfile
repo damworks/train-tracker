@@ -1,39 +1,26 @@
 FROM php:8.3-fpm-alpine
 
-# Installazione librerie di sistema per compilare le estensioni PHP
-RUN apk add --no-cache \
-    icu-dev \
-    libzip-dev \
-    oniguruma-dev \
-    git \
-    unzip
+# Strumento ufficiale per installare estensioni PHP in Docker senza impazzire con Alpine
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-# Installazione di tutte le estensioni PHP richieste da Symfony
-RUN docker-php-ext-install \
-    pdo_mysql \
-    opcache \
-    intl \
-    zip \
-    mbstring \
-    ctype \
-    iconv
+# Installazione pulita delle estensioni richieste da Symfony
+RUN install-php-extensions pdo_mysql opcache intl zip
 
-# Copia dell'eseguibile di Composer dalla sua immagine ufficiale
+# Copia Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiamo prima solo i manifest delle dipendenze
+# Copiamo prima solo i file di configurazione delle dipendenze per sfruttare la cache Docker
 COPY composer.json composer.lock ./
 
-# Permettiamo a Composer di girare da root nel container
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Installazione dei pacchetti SENZA eseguire script che richiedono il DB attivo
+# Installazione pacchetti senza script post-installazione
 RUN composer install --no-dev --no-scripts --optimize-autoloader
 
-# Ora copiamo il resto del codice sorgente della webapp
+# Copia tutto il sorgente del progetto
 COPY . .
 
-# Creazione cartelle var/cache e var/log con i giusti permessi
+# Creazione cartelle var e gestione dei permessi per www-data
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
