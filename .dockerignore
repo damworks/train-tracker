@@ -1,0 +1,5 @@
+vendor/
+var/
+.ddev/
+.git/
+.env.local
