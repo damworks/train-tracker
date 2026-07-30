@@ -1,5 +1,5 @@
 # ==========================================
-# STAGE 1: Download delle dipendenze con Composer ufficiale
+# STAGE 1: Download dipendenze con Composer
 # ==========================================
 FROM composer:2 AS vendor
 
@@ -7,7 +7,6 @@ WORKDIR /app
 
 COPY composer.json composer.lock ./
 
-# Installiamo i pacchetti senza dev e senza script
 RUN composer install \
     --no-dev \
     --no-scripts \
@@ -16,22 +15,19 @@ RUN composer install \
 
 COPY . .
 
-# Generiamo l'autoloader finale
 RUN composer dump-autoload --no-dev --optimize
 
 # ==========================================
-# STAGE 2: Immagine PHP FPM di Produzione
+# STAGE 2: Runtime PHP 8.4 FPM
 # ==========================================
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
-# Installatore estensioni PHP
+# Installer estensioni PHP
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 RUN install-php-extensions pdo_mysql opcache intl zip dom xml mbstring
 
 WORKDIR /var/www/html
 
-# Copiamo il codice e le dipendenze già pronte dallo STAGE 1
 COPY --from=vendor /app /var/www/html
 
-# Creazione cartelle var e permessi
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
