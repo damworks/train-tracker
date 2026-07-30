@@ -1,0 +1,4 @@
+FROM nginx:alpine
+
+# Copiamo la configurazione di Nginx direttamente dentro l'immagine
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
