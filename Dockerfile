@@ -12,9 +12,9 @@ WORKDIR /var/www/html
 # Copia il codice della webapp
 COPY . .
 
-# Installazione delle dipendenze senza librerie di dev
+# Disabilitiamo gli script automatici durante la build con --no-scripts
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --no-scripts --optimize-autoloader
 
 # Permessi sulle cartelle di cache e log
 RUN chown -R www-data:www-data var
